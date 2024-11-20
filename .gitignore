@@ -1,3 +1,9 @@
+# Ignore the build folder
+build/
+
+# Ignore the .idea folder of CLion
+.idea/
+
 # Prerequisites
 *.d
 
