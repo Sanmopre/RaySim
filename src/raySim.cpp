@@ -18,6 +18,27 @@ namespace
         const auto quat = QuaternionFromEuler(pitch, yaw, roll);
         return btQuaternion(quat.x, quat.y, quat.z, quat.w).normalize();
     }
+
+    Matrix getRaylibRotationMatrixFromQuaternion(const btQuaternion& quat) {
+        return {
+            1 - 2 * quat.y() * quat.y() - 2 * quat.z() * quat.z(),
+            2 * quat.x() * quat.y() - 2 * quat.z() * quat.w(),
+            2 * quat.x() * quat.z() + 2 * quat.y() * quat.w(),
+            0,
+
+            2 * quat.x() * quat.y() + 2 * quat.z() * quat.w(),
+            1 - 2 * quat.x() * quat.x() - 2 * quat.z() * quat.z(),
+            2 * quat.y() * quat.z() - 2 * quat.x() * quat.w(),
+            0,
+
+            2 * quat.x() * quat.z() - 2 * quat.y() * quat.w(),
+            2 * quat.y() * quat.z() + 2 * quat.x() * quat.w(),
+            1 - 2 * quat.x() * quat.x() - 2 * quat.y() * quat.y(),
+            0,
+
+            0, 0, 0, 1
+        };
+    }
 }
 
 RaySim::RaySim()
@@ -109,31 +130,7 @@ ApplicationState RaySim::Update()
         // Create a Model from the Mesh
         Model& model = simModel.getModel();
 
-        // Extract the quaternion directly from the Bullet transform
-        btQuaternion rotation = transform.getRotation();
-
-        // Convert the Bullet quaternion to a raylib Matrix
-        Matrix rotationMatrix = {
-            1 - 2 * rotation.y() * rotation.y() - 2 * rotation.z() * rotation.z(),
-            2 * rotation.x() * rotation.y() - 2 * rotation.z() * rotation.w(),
-            2 * rotation.x() * rotation.z() + 2 * rotation.y() * rotation.w(),
-            0,
-
-            2 * rotation.x() * rotation.y() + 2 * rotation.z() * rotation.w(),
-            1 - 2 * rotation.x() * rotation.x() - 2 * rotation.z() * rotation.z(),
-            2 * rotation.y() * rotation.z() - 2 * rotation.x() * rotation.w(),
-            0,
-
-            2 * rotation.x() * rotation.z() - 2 * rotation.y() * rotation.w(),
-            2 * rotation.y() * rotation.z() + 2 * rotation.x() * rotation.w(),
-            1 - 2 * rotation.x() * rotation.x() - 2 * rotation.y() * rotation.y(),
-            0,
-
-            0, 0, 0, 1
-        };
-
-        // Set the model's transform using the rotation matrix
-        model.transform = MatrixMultiply(rotationMatrix, MatrixTranslate(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ()));
+        model.transform = MatrixMultiply(getRaylibRotationMatrixFromQuaternion(transform.getRotation()), MatrixTranslate(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ()));
         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
         model.materials[0].shader = shader;
         DrawModel(model, Vector3Zero(), 1.0f, simModel.getColor());
