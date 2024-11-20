@@ -41,6 +41,8 @@ private:
     //TEST
     entt::entity entity1;
     entt::entity entity2;
+    Texture2D texture;
+    Shader shader;
 };
 
 }

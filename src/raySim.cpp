@@ -47,7 +47,7 @@ ApplicationState RaySim::Init()
     const auto& physicsBody = registry_.emplace<PhysicsBody>(entity1, physicsWorld_, 1.0f, btVector3{}, entity1Transform.transform, btBoxShape(btVector3(1, 1, 1)));
     auto& simModel = registry_.emplace<SimModel>(entity1);
     simModel.loadModelFromMesh(physicsBody.getCollisionMesh());
-    simModel.setColor(BLUE);
+    simModel.setColor(WHITE);
 
 
     auto& entity2Transform = registry_.emplace<ray_sim::Transform>(entity2);
@@ -56,7 +56,7 @@ ApplicationState RaySim::Init()
     const auto& physicsBody2 = registry_.emplace<PhysicsBody>(entity2, physicsWorld_, 0.0f, btVector3{}, entity2Transform.transform, btBoxShape(btVector3(10, 1, 10)));
     auto& simModel2 = registry_.emplace<SimModel>(entity2);
     simModel2.loadModelFromMesh(physicsBody2.getCollisionMesh());
-    simModel2.setColor(ORANGE);
+    simModel2.setColor(WHITE);
 
     camera_.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
     camera_.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
@@ -67,6 +67,14 @@ ApplicationState RaySim::Init()
     DisableCursor();
 
     SetTargetFPS(targetFps);
+
+    texture = LoadTexture("../resources/wood.png");
+    shader = LoadShader("../resources/base_lighting.vs", "../resources/lighting.fs");
+
+    // Set light properties
+    Vector3 lightPosition = (Vector3){ 0.0f, 2.0f, 2.0f };
+    int lightLoc = GetShaderLocation(shader, "lightPosition");
+    SetShaderValue(shader, lightLoc, &lightPosition, SHADER_UNIFORM_VEC3);
 
     return ApplicationState::RUNNING;
 }
@@ -126,9 +134,10 @@ ApplicationState RaySim::Update()
 
         // Set the model's transform using the rotation matrix
         model.transform = MatrixMultiply(rotationMatrix, MatrixTranslate(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ()));
-
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        model.materials[0].shader = shader;
         DrawModel(model, Vector3Zero(), 1.0f, simModel.getColor());
-        drawModelWireFrame(model);
+        //drawModelWireFrame(model);
     }
 
     DrawGrid(100, 1.0f);
