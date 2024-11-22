@@ -97,6 +97,8 @@ ApplicationState RaySim::Init()
     int lightLoc = GetShaderLocation(shader, "lightPosition");
     SetShaderValue(shader, lightLoc, &lightPosition, SHADER_UNIFORM_VEC3);
 
+    terrainModel = LoadModelFromMesh(terrain_generator::TerrainGenerator::generateTerrainMesh(terrainGenerator.generateChunk({0,0})));
+
     return ApplicationState::RUNNING;
 }
 
@@ -118,7 +120,7 @@ ApplicationState RaySim::Update()
 
     BeginMode3D(camera_);
 
-    auto renderEntitiesView = registry_.view<ray_sim::Transform, ray_sim::PhysicsBody, ray_sim::SimModel>();
+    const auto renderEntitiesView = registry_.view<ray_sim::Transform, ray_sim::PhysicsBody, ray_sim::SimModel>();
     for(const auto& entity : registry_.view<ray_sim::Transform, ray_sim::PhysicsBody>())
     {
         auto& transform = renderEntitiesView.get<ray_sim::Transform>(entity).transform;
@@ -138,6 +140,7 @@ ApplicationState RaySim::Update()
     }
 
     DrawGrid(100, 1.0f);
+    DrawModel(terrainModel, { 0.0f, 0.0f, 0.0f }, 1.0f, GREEN);
 
     EndMode3D();
 

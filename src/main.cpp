@@ -1,6 +1,5 @@
 #include "raySim.h"
 
-
 int main(void)
 {
     ray_sim::RaySim raySim;

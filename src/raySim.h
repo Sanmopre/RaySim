@@ -4,6 +4,8 @@
 #include "raylib.h"
 #include "entt.hpp"
 
+#include "terrainGenerator/terrainGenerator.h"
+
 namespace ray_sim
 {
 
@@ -43,6 +45,8 @@ private:
     entt::entity entity2;
     Texture2D texture;
     Shader shader;
+    terrain_generator::TerrainGenerator terrainGenerator;
+    Model terrainModel;
 };
 
 }
