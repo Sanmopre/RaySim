@@ -5,11 +5,16 @@
 #include "FastNoiseLite.h"
 #include "../types.h"
 
+//raylib
 #include "raylib.h"
 
-#define CHUNK_SIZE 64u
-#define TILE_SIZE 5.0f
-#define HEIGHT_MULTIPLIER 10.0f
+//bullet
+#include <btBulletDynamicsCommon.h>
+#include <memory>
+
+#define CHUNK_SIZE 2u
+#define TILE_SIZE 1.0f
+#define HEIGHT_MULTIPLIER 1.0f
 
 namespace terrain_generator
 {
@@ -41,6 +46,7 @@ class TerrainGenerator
 
     [[nodiscard]] TerrainChunk generateChunk(const Coordinates& generate) const;
     [[nodiscard]] static Mesh generateTerrainMesh(const TerrainChunk &chunk);
+    [[nodiscard]] static std::shared_ptr<btBvhTriangleMeshShape> generateTerrainCollisionShape(const TerrainChunk& chunk);
 
 private:
 

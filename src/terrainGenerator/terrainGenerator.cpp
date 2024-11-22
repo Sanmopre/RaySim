@@ -1,6 +1,8 @@
 #include "terrainGenerator.h"
 
 //std
+#include <iostream>
+#include <memory>
 #include <vector>
 
 namespace terrain_generator {
@@ -79,8 +81,60 @@ namespace terrain_generator {
         mesh.texcoords = reinterpret_cast<f32*>(texCoords.data());
         mesh.indices = indices.data();
 
-        UploadMesh(&mesh, true);
-
+        UploadMesh(&mesh, false);
         return mesh;
     }
+
+     std::shared_ptr<btBvhTriangleMeshShape>  TerrainGenerator::generateTerrainCollisionShape(const TerrainChunk &chunk) {
+        const auto triangleMesh = std::make_shared<btTriangleMesh>();
+
+        for (u32 y = 0; y < CHUNK_SIZE - 1; ++y) {
+            for (u32 x = 0; x < CHUNK_SIZE - 1; ++x) {
+                // Get the heights of the 4 corners of the grid square
+                const f64 heightTL = chunk.heightValue[x][y];
+                const f64 heightTR = chunk.heightValue[x + 1][y];
+                const f64 heightBL = chunk.heightValue[x][y + 1];
+                const f64 heightBR = chunk.heightValue[x + 1][y + 1];
+
+                // Define the 4 vertices of the square
+                btVector3 vertexTL(x * TILE_SIZE, heightTL * HEIGHT_MULTIPLIER, y * TILE_SIZE);
+                btVector3 vertexTR((x + 1) * TILE_SIZE, heightTR * HEIGHT_MULTIPLIER, y * TILE_SIZE);
+                btVector3 vertexBL(x * TILE_SIZE, heightBL * HEIGHT_MULTIPLIER, (y + 1) * TILE_SIZE);
+                btVector3 vertexBR((x + 1) * TILE_SIZE, heightBR * HEIGHT_MULTIPLIER, (y + 1) * TILE_SIZE);
+
+                if ((vertexTL - vertexBL).length2() < 1e-6 ||
+    (vertexBL - vertexTR).length2() < 1e-6 ||
+    (vertexTR - vertexTL).length2() < 1e-6) {
+                    std::cout << "Degenerate triangle detected: " << vertexTL << ", " << vertexBL << ", " << vertexTR << std::endl;
+                    continue;
+    }
+                // Ensure vertices are valid
+                if (vertexTL == vertexTR || vertexTL == vertexBL || vertexTR == vertexBR) {
+                    std::cerr << "Error: Invalid or duplicate vertices in triangle mesh!" << std::endl;
+                    continue;
+                }
+
+                // Add two triangles for the square
+                triangleMesh->addTriangle(vertexTL, vertexBL, vertexTR);
+                triangleMesh->addTriangle(vertexTR, vertexBL, vertexBR);
+            }
+        }
+
+        // Validate triangle mesh
+        if (triangleMesh->getNumTriangles() == 0) {
+            std::cerr << "Error: Triangle mesh contains no triangles!" << std::endl;
+        }
+
+        // Construct and return the collision shape
+        return std::make_shared<btBvhTriangleMeshShape>(triangleMesh.get(), true);
+    }
+
+    /*
+    *     std::shared_ptr<btBvhTriangleMeshShape>  TerrainGenerator::generateTerrainCollisionShape(const TerrainChunk &chunk) {
+        auto triangleMesh = std::make_shared<btTriangleMesh>();
+        triangleMesh->addTriangle(btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(0, 0, 1));
+        return std::make_shared<btBvhTriangleMeshShape>(triangleMesh.get(), true);
+    }
+     */
+
 }

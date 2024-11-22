@@ -43,6 +43,7 @@ private:
     //TEST
     entt::entity entity1;
     entt::entity entity2;
+    entt::entity entityTerrain;
     Texture2D texture;
     Shader shader;
     terrain_generator::TerrainGenerator terrainGenerator;

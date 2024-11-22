@@ -61,23 +61,32 @@ ApplicationState RaySim::Init()
 
     entity1 = registry_.create();
     entity2 = registry_.create();
+    entityTerrain = registry_.create();
 
     auto& entity1Transform = registry_.emplace<ray_sim::Transform>(entity1);
     entity1Transform.transform.setOrigin({0, 50, 0});
     entity1Transform.transform.setRotation(fromEuler(0, 0,0));
-    const auto& physicsBody = registry_.emplace<PhysicsBody>(entity1, physicsWorld_, 1.0f, btVector3{}, entity1Transform.transform, btBoxShape(btVector3(1, 1, 1)));
+    const auto& physicsBody = registry_.emplace<PhysicsBody>(entity1, physicsWorld_, 1.0f, entity1Transform.transform, btBoxShape(btVector3(1, 1, 1)));
     auto& simModel = registry_.emplace<SimModel>(entity1);
     simModel.loadModelFromMesh(physicsBody.getCollisionMesh());
     simModel.setColor(WHITE);
 
 
     auto& entity2Transform = registry_.emplace<ray_sim::Transform>(entity2);
-    entity2Transform.transform.setOrigin({0, 0, 0});
+    entity2Transform.transform.setOrigin({0, -10, 0});
     entity2Transform.transform.setRotation(fromEuler(0, 45 *DEG2RAD,0));
-    const auto& physicsBody2 = registry_.emplace<PhysicsBody>(entity2, physicsWorld_, 0.0f, btVector3{}, entity2Transform.transform, btBoxShape(btVector3(10, 1, 10)));
+    const auto& physicsBody2 = registry_.emplace<PhysicsBody>(entity2, physicsWorld_, 0.0f,entity2Transform.transform, btBoxShape(btVector3(10, 1, 10)));
     auto& simModel2 = registry_.emplace<SimModel>(entity2);
     simModel2.loadModelFromMesh(physicsBody2.getCollisionMesh());
     simModel2.setColor(WHITE);
+
+    auto& entity3Transform = registry_.emplace<ray_sim::Transform>(entityTerrain);
+    entity3Transform.transform.setOrigin({0, 0, 0});
+    entity3Transform.transform.setRotation(fromEuler(0, 0,0));
+    registry_.emplace<PhysicsBody>(entityTerrain, physicsWorld_, 0.0f,entity3Transform.transform, terrain_generator::TerrainGenerator::generateTerrainCollisionShape(terrainGenerator.generateChunk({0,0})));
+    auto& simModel3 = registry_.emplace<SimModel>(entityTerrain);
+    simModel3.loadModelFromMesh(terrain_generator::TerrainGenerator::generateTerrainMesh(terrainGenerator.generateChunk({0,0})));
+    simModel3.setColor(GREEN);
 
     camera_.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
     camera_.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
@@ -96,8 +105,6 @@ ApplicationState RaySim::Init()
     Vector3 lightPosition = (Vector3){ 0.0f, 2.0f, 2.0f };
     int lightLoc = GetShaderLocation(shader, "lightPosition");
     SetShaderValue(shader, lightLoc, &lightPosition, SHADER_UNIFORM_VEC3);
-
-    terrainModel = LoadModelFromMesh(terrain_generator::TerrainGenerator::generateTerrainMesh(terrainGenerator.generateChunk({0,0})));
 
     return ApplicationState::RUNNING;
 }
@@ -121,7 +128,7 @@ ApplicationState RaySim::Update()
     BeginMode3D(camera_);
 
     const auto renderEntitiesView = registry_.view<ray_sim::Transform, ray_sim::PhysicsBody, ray_sim::SimModel>();
-    for(const auto& entity : registry_.view<ray_sim::Transform, ray_sim::PhysicsBody>())
+    for(const auto& entity : renderEntitiesView)
     {
         auto& transform = renderEntitiesView.get<ray_sim::Transform>(entity).transform;
         auto& body = renderEntitiesView.get<ray_sim::PhysicsBody>(entity);
@@ -140,7 +147,6 @@ ApplicationState RaySim::Update()
     }
 
     DrawGrid(100, 1.0f);
-    DrawModel(terrainModel, { 0.0f, 0.0f, 0.0f }, 1.0f, GREEN);
 
     EndMode3D();
 
