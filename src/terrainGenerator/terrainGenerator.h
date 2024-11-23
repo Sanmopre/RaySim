@@ -9,10 +9,9 @@
 #include "raylib.h"
 
 //bullet
-#include <btBulletDynamicsCommon.h>
-#include <memory>
+#include "BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
 
-#define CHUNK_SIZE 2u
+#define CHUNK_SIZE 40u
 #define TILE_SIZE 1.0f
 #define HEIGHT_MULTIPLIER 1.0f
 
@@ -36,6 +35,8 @@ struct Coordinates
 struct TerrainChunk
 {
     f64 heightValue[CHUNK_SIZE][CHUNK_SIZE] = {};
+    [[nodiscard]] Mesh generateTerrainMesh();
+    [[nodiscard]] btHeightfieldTerrainShape generateTerrainCollisionShape();
 };
 
 class TerrainGenerator
@@ -45,8 +46,6 @@ class TerrainGenerator
     ~TerrainGenerator() = default;
 
     [[nodiscard]] TerrainChunk generateChunk(const Coordinates& generate) const;
-    [[nodiscard]] static Mesh generateTerrainMesh(const TerrainChunk &chunk);
-    [[nodiscard]] static std::shared_ptr<btBvhTriangleMeshShape> generateTerrainCollisionShape(const TerrainChunk& chunk);
 
 private:
 

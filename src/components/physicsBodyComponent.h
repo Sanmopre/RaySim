@@ -1,10 +1,15 @@
 #pragma once
 
 #include "../physics.h"
+
+// bullet
 #include <BulletCollision/Gimpact/btGImpactShape.h>
+#include "BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
 
 //std
 #include <memory>
+
+
 
 
 namespace ray_sim
@@ -13,14 +18,16 @@ namespace ray_sim
     {
         BOX,
         SPHERE,
-        MESH
+        MESH,
+        TERRAIN
     };
+
     struct PhysicsBody
     {
         PhysicsBody(PhysicsWorld& physicsWorld, btScalar mass, const btTransform& transform, const btBoxShape& shape);
         PhysicsBody(PhysicsWorld& physicsWorld, btScalar mass, const btTransform& transform, const btSphereShape& shape);
-        PhysicsBody(PhysicsWorld &physicsWorld, btScalar mass, const btTransform &transform,
-            std::shared_ptr<btBvhTriangleMeshShape> shape);
+        PhysicsBody(PhysicsWorld &physicsWorld, btScalar mass, const btTransform &transform, const btTriangleMeshShape& shape);
+        PhysicsBody(PhysicsWorld &physicsWorld, btScalar mass, const btTransform &transform, const btHeightfieldTerrainShape& shape);
 
         ~PhysicsBody();
 
@@ -89,19 +96,47 @@ namespace ray_sim
     }
 
     inline PhysicsBody::PhysicsBody(PhysicsWorld &physicsWorld, btScalar mass, const btTransform &transform,
-            std::shared_ptr<btBvhTriangleMeshShape> shape)
+            const btTriangleMeshShape& shape)
         : collisionType_{CollisionType::MESH}
     , mass{mass}
     , motionState{std::make_unique<btDefaultMotionState>(transform)}
-    , collisionShape{(shape)}  // Store shared pointer
+    , collisionShape{std::make_shared<btTriangleMeshShape>(shape)}  // Store shared pointer
     , physicsWorld_{physicsWorld}
     , rigidBodyId_{0}
     , mesh_{convertCollisionShapeToMesh()}
     {
         btVector3 localInertia(0, 0, 0);
         if (mass != 0.0f) {
-            shape->calculateLocalInertia(mass, localInertia);
+            shape.calculateLocalInertia(mass, localInertia);
         }
+
+        collisionShape->setMargin(0.01f);
+
+        // Create the rigid body
+        rigidBodyId_ = physicsWorld_.createNewRigidBody(btRigidBody::btRigidBodyConstructionInfo(
+            mass,
+            motionState.get(),
+            collisionShape.get(),
+            localInertia
+        ));
+    }
+
+    inline PhysicsBody::PhysicsBody(PhysicsWorld &physicsWorld, btScalar mass, const btTransform &transform,
+        const btHeightfieldTerrainShape &shape)
+    : collisionType_{CollisionType::TERRAIN}
+    , mass{mass}
+    , motionState{std::make_unique<btDefaultMotionState>(transform)}
+    , collisionShape{std::make_shared<btHeightfieldTerrainShape>(shape)}
+    , physicsWorld_{physicsWorld}
+    , rigidBodyId_{0}
+    , mesh_{convertCollisionShapeToMesh()}
+    {
+        btVector3 localInertia(0, 0, 0);
+        if (mass != 0.0f) {
+            shape.calculateLocalInertia(mass, localInertia);
+        }
+
+        collisionShape->setMargin(0.01f);
 
         // Create the rigid body
         rigidBodyId_ = physicsWorld_.createNewRigidBody(btRigidBody::btRigidBodyConstructionInfo(
@@ -148,6 +183,8 @@ namespace ray_sim
                 }
                 break;
             case CollisionType::MESH:
+                break;
+            case CollisionType::TERRAIN:
                 break;
             default:
                 break;

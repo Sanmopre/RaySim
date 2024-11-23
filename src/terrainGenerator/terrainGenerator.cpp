@@ -1,14 +1,16 @@
 #include "terrainGenerator.h"
 
 //std
-#include <iostream>
-#include <memory>
+#include <algorithm>
 #include <vector>
 
-namespace terrain_generator {
+namespace terrain_generator
+{
     TerrainGenerator::TerrainGenerator()
     {
         noiseGenerator_.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+        noiseGenerator_.SetFrequency(0.1);
+        noiseGenerator_.SetCellularJitter(0.05);
     }
 
     TerrainChunk TerrainGenerator::generateChunk(const Coordinates &generate) const
@@ -26,7 +28,7 @@ namespace terrain_generator {
         return chunk;
     }
 
-    Mesh TerrainGenerator::generateTerrainMesh(const TerrainChunk &chunk)
+    Mesh TerrainChunk::generateTerrainMesh()
     {
         constexpr u32 vertexCount = CHUNK_SIZE * CHUNK_SIZE;
         constexpr u32 triangleCount = (CHUNK_SIZE - 1) * (CHUNK_SIZE - 1) * 2;
@@ -41,7 +43,7 @@ namespace terrain_generator {
         u32 index = 0;
         for (u32 y = 0; y < CHUNK_SIZE; y++) {
             for (u32 x = 0; x < CHUNK_SIZE; x++) {
-                const auto height = static_cast<f32>(chunk.heightValue[x][y] * HEIGHT_MULTIPLIER);
+                const auto height = static_cast<f32>(heightValue[x][y] * HEIGHT_MULTIPLIER);
                 vertices[index] = { static_cast<f32>(x) * TILE_SIZE, height, static_cast<f32>(y) * TILE_SIZE};
                 normals[index] = { 0.0f, 1.0f, 0.0f }; // Placeholder normals, to be calculated
                 texCoords[index] = { static_cast<f32>(x) / (CHUNK_SIZE - 1), static_cast<f32>(y) / (CHUNK_SIZE - 1) };
@@ -85,56 +87,48 @@ namespace terrain_generator {
         return mesh;
     }
 
-     std::shared_ptr<btBvhTriangleMeshShape>  TerrainGenerator::generateTerrainCollisionShape(const TerrainChunk &chunk) {
-        const auto triangleMesh = std::make_shared<btTriangleMesh>();
+    btHeightfieldTerrainShape TerrainChunk::generateTerrainCollisionShape()
+    {
+        // The dimensions of the heightfield
+        const int width = CHUNK_SIZE;
+        const int length = CHUNK_SIZE;
 
-        for (u32 y = 0; y < CHUNK_SIZE - 1; ++y) {
-            for (u32 x = 0; x < CHUNK_SIZE - 1; ++x) {
-                // Get the heights of the 4 corners of the grid square
-                const f64 heightTL = chunk.heightValue[x][y];
-                const f64 heightTR = chunk.heightValue[x + 1][y];
-                const f64 heightBL = chunk.heightValue[x][y + 1];
-                const f64 heightBR = chunk.heightValue[x + 1][y + 1];
-
-                // Define the 4 vertices of the square
-                btVector3 vertexTL(x * TILE_SIZE, heightTL * HEIGHT_MULTIPLIER, y * TILE_SIZE);
-                btVector3 vertexTR((x + 1) * TILE_SIZE, heightTR * HEIGHT_MULTIPLIER, y * TILE_SIZE);
-                btVector3 vertexBL(x * TILE_SIZE, heightBL * HEIGHT_MULTIPLIER, (y + 1) * TILE_SIZE);
-                btVector3 vertexBR((x + 1) * TILE_SIZE, heightBR * HEIGHT_MULTIPLIER, (y + 1) * TILE_SIZE);
-
-                if ((vertexTL - vertexBL).length2() < 1e-6 ||
-    (vertexBL - vertexTR).length2() < 1e-6 ||
-    (vertexTR - vertexTL).length2() < 1e-6) {
-                    std::cout << "Degenerate triangle detected: " << vertexTL << ", " << vertexBL << ", " << vertexTR << std::endl;
-                    continue;
-    }
-                // Ensure vertices are valid
-                if (vertexTL == vertexTR || vertexTL == vertexBL || vertexTR == vertexBR) {
-                    std::cerr << "Error: Invalid or duplicate vertices in triangle mesh!" << std::endl;
-                    continue;
-                }
-
-                // Add two triangles for the square
-                triangleMesh->addTriangle(vertexTL, vertexBL, vertexTR);
-                triangleMesh->addTriangle(vertexTR, vertexBL, vertexBR);
+        // Flattening the 2D heightValue array into a 1D array for btHeightfieldTerrainShape
+        auto* heightData = new float[width * length];
+        for (int y = 0; y < length; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                heightData[y * width + x] = static_cast<float>(heightValue[x][y]);
             }
         }
 
-        // Validate triangle mesh
-        if (triangleMesh->getNumTriangles() == 0) {
-            std::cerr << "Error: Triangle mesh contains no triangles!" << std::endl;
-        }
+        // Minimum and maximum height values in the heightfield
+        const float minHeight = *std::min_element(heightData, heightData + width * length);
+        const float maxHeight = *std::max_element(heightData, heightData + width * length);
 
-        // Construct and return the collision shape
-        return std::make_shared<btBvhTriangleMeshShape>(triangleMesh.get(), true);
+        // Creating the heightfield terrain shape
+        btHeightfieldTerrainShape terrainShape(
+            width,           // Number of heightfield points along width
+            length,          // Number of heightfield points along length
+            heightData,      // Pointer to heightfield data
+            1.0f,            // Height scale (scaling factor for height values)
+            minHeight,       // Minimum height value
+            maxHeight,       // Maximum height value
+            1,               // Up axis (1 = Y-axis up)
+            PHY_FLOAT,       // Data type of heightfield values
+            false            // Flip quad edges (false = no flipping)
+        );
+
+        // Set local scaling of the shape (optional)
+        btVector3 localScaling(1.0f, 1.0f, 1.0f);
+        terrainShape.setLocalScaling(localScaling);
+
+        // Cleaning up height data as Bullet makes an internal copy
+        delete[] heightData;
+
+        return terrainShape;
     }
 
-    /*
-    *     std::shared_ptr<btBvhTriangleMeshShape>  TerrainGenerator::generateTerrainCollisionShape(const TerrainChunk &chunk) {
-        auto triangleMesh = std::make_shared<btTriangleMesh>();
-        triangleMesh->addTriangle(btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(0, 0, 1));
-        return std::make_shared<btBvhTriangleMeshShape>(triangleMesh.get(), true);
-    }
-     */
 
 }

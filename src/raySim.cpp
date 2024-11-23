@@ -72,7 +72,7 @@ ApplicationState RaySim::Init()
     simModel.setColor(WHITE);
 
 
-    auto& entity2Transform = registry_.emplace<ray_sim::Transform>(entity2);
+   auto& entity2Transform = registry_.emplace<ray_sim::Transform>(entity2);
     entity2Transform.transform.setOrigin({0, -10, 0});
     entity2Transform.transform.setRotation(fromEuler(0, 45 *DEG2RAD,0));
     const auto& physicsBody2 = registry_.emplace<PhysicsBody>(entity2, physicsWorld_, 0.0f,entity2Transform.transform, btBoxShape(btVector3(10, 1, 10)));
@@ -83,9 +83,9 @@ ApplicationState RaySim::Init()
     auto& entity3Transform = registry_.emplace<ray_sim::Transform>(entityTerrain);
     entity3Transform.transform.setOrigin({0, 0, 0});
     entity3Transform.transform.setRotation(fromEuler(0, 0,0));
-    registry_.emplace<PhysicsBody>(entityTerrain, physicsWorld_, 0.0f,entity3Transform.transform, terrain_generator::TerrainGenerator::generateTerrainCollisionShape(terrainGenerator.generateChunk({0,0})));
+    registry_.emplace<PhysicsBody>(entityTerrain, physicsWorld_, 0.0f,entity3Transform.transform, terrainGenerator.generateChunk({0,0}).generateTerrainCollisionShape());
     auto& simModel3 = registry_.emplace<SimModel>(entityTerrain);
-    simModel3.loadModelFromMesh(terrain_generator::TerrainGenerator::generateTerrainMesh(terrainGenerator.generateChunk({0,0})));
+    simModel3.loadModelFromMesh((terrainGenerator.generateChunk({0,0}).generateTerrainMesh()));
     simModel3.setColor(GREEN);
 
     camera_.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position

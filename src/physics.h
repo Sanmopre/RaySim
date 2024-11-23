@@ -24,6 +24,7 @@ public:
     void deleteRigidBody(const u32 rigidBodyId);
 
     [[nodiscard]] btRigidBody* getRigidBody(const u32 rigidBodyId) const;
+
 private:
 
     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration_;
