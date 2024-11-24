@@ -11,12 +11,17 @@
 //bullet
 #include "BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
 
-#define CHUNK_SIZE 40u
+//std
+#include <array>
+
+#define CHUNK_SIZE 20u
 #define TILE_SIZE 1.0f
 #define HEIGHT_MULTIPLIER 1.0f
 
 namespace terrain_generator
 {
+
+using HeightMap = std::array<std::array<f64, CHUNK_SIZE>, CHUNK_SIZE>;
 
 struct Coordinates
 {
@@ -34,22 +39,35 @@ struct Coordinates
 
 struct TerrainChunk
 {
-    f64 heightValue[CHUNK_SIZE][CHUNK_SIZE] = {};
-    [[nodiscard]] Mesh generateTerrainMesh();
-    [[nodiscard]] btHeightfieldTerrainShape generateTerrainCollisionShape();
+public:
+    TerrainChunk(f64 xPos, f64 yPos);
+    ~TerrainChunk() = default;
+
+public:
+    [[nodiscard]] const Mesh& getTerrainMesh() const noexcept;
+    [[nodiscard]] const btHeightfieldTerrainShape& getTerrainShape() const noexcept;
+    [[nodiscard]] Model& getModel() noexcept;
+
+private:
+
+    [[nodiscard]] Mesh generateTerrainMesh() const;
+    [[nodiscard]] btHeightfieldTerrainShape generateTerrainCollisionShape() const;
+
+private:
+    HeightMap heightValue= {};
+    Mesh mesh_;
+    btHeightfieldTerrainShape collisionShape_;
+    Model model_;
 };
 
 class TerrainGenerator
 {
     public:
-    TerrainGenerator();
+    TerrainGenerator() = default;
     ~TerrainGenerator() = default;
-
-    [[nodiscard]] TerrainChunk generateChunk(const Coordinates& generate) const;
 
 private:
 
-    FastNoiseLite noiseGenerator_;
     std::map<Coordinates, TerrainChunk> chunkMap_;
 };
 

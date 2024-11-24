@@ -19,7 +19,8 @@ namespace
         return btQuaternion(quat.x, quat.y, quat.z, quat.w).normalize();
     }
 
-    Matrix getRaylibRotationMatrixFromQuaternion(const btQuaternion& quat) {
+    Matrix getRaylibRotationMatrixFromQuaternion(const btQuaternion& quat)
+    {
         return {
             1 - 2 * quat.y() * quat.y() - 2 * quat.z() * quat.z(),
             2 * quat.x() * quat.y() - 2 * quat.z() * quat.w(),
@@ -61,32 +62,23 @@ ApplicationState RaySim::Init()
 
     entity1 = registry_.create();
     entity2 = registry_.create();
-    entityTerrain = registry_.create();
+    auto entityTerrain = registry_.create();
+    terrainChunks_.emplace_back(entityTerrain);
+
 
     auto& entity1Transform = registry_.emplace<ray_sim::Transform>(entity1);
-    entity1Transform.transform.setOrigin({0, 50, 0});
+    entity1Transform.transform.setOrigin({0, 10, 0});
     entity1Transform.transform.setRotation(fromEuler(0, 0,0));
     const auto& physicsBody = registry_.emplace<PhysicsBody>(entity1, physicsWorld_, 1.0f, entity1Transform.transform, btBoxShape(btVector3(1, 1, 1)));
     auto& simModel = registry_.emplace<SimModel>(entity1);
     simModel.loadModelFromMesh(physicsBody.getCollisionMesh());
     simModel.setColor(WHITE);
 
-
-   auto& entity2Transform = registry_.emplace<ray_sim::Transform>(entity2);
-    entity2Transform.transform.setOrigin({0, -10, 0});
-    entity2Transform.transform.setRotation(fromEuler(0, 45 *DEG2RAD,0));
-    const auto& physicsBody2 = registry_.emplace<PhysicsBody>(entity2, physicsWorld_, 0.0f,entity2Transform.transform, btBoxShape(btVector3(10, 1, 10)));
-    auto& simModel2 = registry_.emplace<SimModel>(entity2);
-    simModel2.loadModelFromMesh(physicsBody2.getCollisionMesh());
-    simModel2.setColor(WHITE);
-
     auto& entity3Transform = registry_.emplace<ray_sim::Transform>(entityTerrain);
     entity3Transform.transform.setOrigin({0, 0, 0});
-    entity3Transform.transform.setRotation(fromEuler(0, 0,0));
-    registry_.emplace<PhysicsBody>(entityTerrain, physicsWorld_, 0.0f,entity3Transform.transform, terrainGenerator.generateChunk({0,0}).generateTerrainCollisionShape());
-    auto& simModel3 = registry_.emplace<SimModel>(entityTerrain);
-    simModel3.loadModelFromMesh((terrainGenerator.generateChunk({0,0}).generateTerrainMesh()));
-    simModel3.setColor(GREEN);
+    entity3Transform.transform.setRotation(fromEuler(entity3Transform.transform.getOrigin().getX(), 0,entity3Transform.transform.getOrigin().getY()));
+    auto terrainChunk =registry_.emplace<terrain_generator::TerrainChunk>(entityTerrain, 0.0 ,0.0);
+    registry_.emplace<PhysicsBody>(entityTerrain, physicsWorld_, 0.0f,entity3Transform.transform, terrainChunk.getTerrainShape());
 
     camera_.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
     camera_.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
@@ -126,6 +118,25 @@ ApplicationState RaySim::Update()
     ClearBackground(RAYWHITE);
 
     BeginMode3D(camera_);
+
+    const auto terrainChunks = registry_.view<ray_sim::Transform, ray_sim::PhysicsBody, terrain_generator::TerrainChunk>();
+    for(const auto& entity : terrainChunks)
+    {
+        auto& transform = terrainChunks.get<ray_sim::Transform>(entity).transform;
+        auto& body = terrainChunks.get<ray_sim::PhysicsBody>(entity);
+        auto& chunk = terrainChunks.get<terrain_generator::TerrainChunk>(entity);
+
+        physicsWorld_.getRigidBody(body.getRigidBodyId())->getMotionState()->getWorldTransform(transform);
+
+        // Create a Model from the Mesh
+        Model& model = chunk.getModel();
+
+        model.transform = MatrixMultiply(getRaylibRotationMatrixFromQuaternion(transform.getRotation()), MatrixTranslate(transform.getOrigin().getX() - (CHUNK_SIZE * TILE_SIZE/2.0f), 0.0f, transform.getOrigin().getZ() - (CHUNK_SIZE * TILE_SIZE/2.0f)));
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        model.materials[0].shader = shader;
+        DrawModel(model, Vector3Zero(), 1.0f, WHITE);
+    }
+
 
     const auto renderEntitiesView = registry_.view<ray_sim::Transform, ray_sim::PhysicsBody, ray_sim::SimModel>();
     for(const auto& entity : renderEntitiesView)
