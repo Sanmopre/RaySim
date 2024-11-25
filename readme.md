@@ -5,6 +5,6 @@ This is an open source flight simulator game with procedurally generated terrain
 ## Third Party Libraries
 
 - **entt** 3.14.0
-- **bullet** 3.2.5
+- **box2d** 3.0.0
 - **raylib** 5.0
 - **fastNoiseLite** 1.1.1

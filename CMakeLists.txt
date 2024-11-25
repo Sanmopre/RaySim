@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(thirdParty/raylib-5.0)
 add_subdirectory(thirdParty/bullet3)
+add_subdirectory(thirdParty/box2d-3.0.0)
 
 add_executable(raySim src/main.cpp
         src/physics.cpp
@@ -24,7 +25,7 @@ add_executable(raySim src/main.cpp
 )
 
 # Link Raylib and Bullet3 libraries to the executable
-target_link_libraries(raySim raylib BulletDynamics BulletCollision LinearMath)
+target_link_libraries(raySim raylib BulletDynamics BulletCollision LinearMath box2d)
 
 # Include Raylib and Bullet3 headers
-target_include_directories(raySim PRIVATE thirdParty/raylib-5.0/src thirdParty/bullet3/src thirdParty/entt thirdParty/fastNoiseLite)
+target_include_directories(raySim PRIVATE thirdParty/raylib-5.0/src thirdParty/bullet3/src thirdParty/entt thirdParty/fastNoiseLite thirdParty/box2d-3.0.0/include)
