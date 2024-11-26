@@ -1,6 +1,6 @@
-# RaySim
+# Ray engine
 
-This is an open source flight simulator game with procedurally generated terrain, base on raylib.
+This is an open source game framework for 2D games.
 
 ## Third Party Libraries
 
