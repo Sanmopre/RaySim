@@ -14,6 +14,10 @@ public:
     Physics();
     ~Physics();
 
+    b2BodyId createPhysicsObject(const b2BodyDef& bodyDef,const b2Polygon& polygon,const b2ShapeDef& shapeDef);
+
+    void update() const;
+
 private:
     b2WorldDef worldDef_;
     b2WorldId worldId_;

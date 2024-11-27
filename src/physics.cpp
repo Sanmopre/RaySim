@@ -1,5 +1,7 @@
 #include "physics.h"
 
+#include "types.h"
+
 ray_engine::Physics::Physics()
 {
     worldDef_ = b2DefaultWorldDef();
@@ -15,4 +17,19 @@ ray_engine::Physics::~Physics()
     }
 
     b2DestroyWorld(worldId_);
+}
+
+b2BodyId ray_engine::Physics::createPhysicsObject(const b2BodyDef& bodyDef,const b2Polygon& polygon,const b2ShapeDef& shapeDef)
+{
+    b2BodyId bodyId = b2CreateBody(worldId_, &bodyDef);
+    b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+    bodiesVector_.emplace_back(bodyId);
+    return bodyId;
+}
+
+void ray_engine::Physics::update() const
+{
+    constexpr f32 timeStep = 1.0f / 60.0f;
+    constexpr u16 subStepCount = 4;
+    b2World_Step(worldId_, timeStep, subStepCount);
 }
