@@ -1,12 +1,22 @@
 #pragma once
 
-// box2d
-#include <vector>
+#include "types.h"
 
+// box2d
 #include "box2d/box2d.h"
+
+//std
+#include <vector>
 
 namespace ray_engine
 {
+
+struct Transform
+{
+    b2Vec2 position = { 0, 0 };
+    b2Rot rotation = b2Rot();
+};
+
 class Physics
 {
 public:
@@ -15,6 +25,8 @@ public:
     ~Physics();
 
     b2BodyId createPhysicsObject(const b2BodyDef& bodyDef,const b2Polygon& polygon,const b2ShapeDef& shapeDef);
+
+    Transform getTransform(b2BodyId bodyId);
 
     void update() const;
 

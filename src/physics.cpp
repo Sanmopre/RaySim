@@ -27,6 +27,14 @@ b2BodyId ray_engine::Physics::createPhysicsObject(const b2BodyDef& bodyDef,const
     return bodyId;
 }
 
+ray_engine::Transform ray_engine::Physics::getTransform(b2BodyId bodyId)
+{
+    Transform transform;
+    transform.position = b2Body_GetPosition(bodyId);
+    transform.rotation = b2Body_GetRotation(bodyId);
+    return transform;
+}
+
 void ray_engine::Physics::update() const
 {
     constexpr f32 timeStep = 1.0f / 60.0f;
