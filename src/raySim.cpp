@@ -10,24 +10,37 @@ RaySim::RaySim()
 :
   camera_{0}
 , targetFps{60}
-, screenWidth_{1920}
-, screenHeight_{1080}
+, screenWidth_{800}
+, screenHeight_{800}
 {
+
+    const auto id = registry_.create();
+
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = {0, 10};
     bodyDef.type = b2_dynamicBody;
 
     b2Polygon polygon = b2MakeBox(0.5f, 0.5f);
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    bodyId = physics_.createPhysicsObject(bodyDef, polygon, shapeDef);
+
+    bodyId = registry_.emplace<b2BodyId>(id, physics_.createPhysicsObject(bodyDef, polygon, shapeDef));
+
+
+
+    b2BodyDef bodyDef2 = b2DefaultBodyDef();
+    bodyDef2.position = {0, 0};
+    bodyDef2.type = b2_staticBody;
+
+    b2Polygon polygon2 = b2MakeBox(20.0f, 0.5f);
+    b2ShapeDef shapeDef2 = b2DefaultShapeDef();
+    terrainId = physics_.createPhysicsObject(bodyDef2, polygon2, shapeDef2);
 }
 
 RaySim::~RaySim()
 {
 }
 
-ApplicationState RaySim::Init()
-{
+ApplicationState RaySim::Init() {
     InitWindow(screenWidth_, screenHeight_, "RaySim");
 
 
@@ -39,6 +52,8 @@ ApplicationState RaySim::Init()
     DisableCursor();
 
     SetTargetFPS(targetFps);
+
+    textureComponent_.addTexture("../resources/wood.png",{0.0f,0.0f},{10.0f,10.0f});
 
     return ApplicationState::RUNNING;
 }
@@ -57,10 +72,12 @@ ApplicationState RaySim::Update()
 
     ClearBackground(DARKBLUE);
 
+    for (const auto& textureData : textureComponent_.getTexturesData())
+    {
+        DrawTexture(textureData.texture, textureData.relativePosition.x, textureData.relativePosition.y, WHITE);
+    }
+
     EndMode2D();
-
-    DrawText("SCREEN AREA", 640, 10, 20, RED);
-
     EndDrawing();
 
     return ApplicationState::RUNNING;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "physics.h"
+#include "textureComponent.h"
 
 // raylib
 #include "raylib.h"
@@ -40,6 +41,8 @@ private:
 
     //testing
     b2BodyId bodyId;
+    b2BodyId terrainId;
+    TextureComponent textureComponent_;
 };
 
 }

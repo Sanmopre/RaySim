@@ -17,6 +17,7 @@ add_executable(raySim
         src/idManager.h
         src/raySim.cpp
         src/raySim.h
+        src/textureComponent.h
 )
 
 # Link Raylib and Bullet3 libraries to the executable
