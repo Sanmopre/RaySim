@@ -2,11 +2,11 @@
 
 int main(void)
 {
-    ray_sim::RaySim raySim;
+    ray_engine::RaySim raySim;
 
-    ray_sim::ApplicationState appState = raySim.Init();
+    ray_engine::ApplicationState appState = raySim.Init();
 
-    while (appState == ray_sim::ApplicationState::RUNNING)
+    while (appState == ray_engine::ApplicationState::RUNNING)
     {
         appState = raySim.Update();
     }

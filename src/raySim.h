@@ -10,7 +10,7 @@
 #include "entt.hpp"
 
 
-namespace ray_sim
+namespace ray_engine
 {
 
 enum ApplicationState
@@ -30,6 +30,11 @@ public:
     [[nodiscard]] ApplicationState Init();
     [[nodiscard]] ApplicationState Update();
     void Shutdown();
+    entt::entity createEntity();
+
+private:
+    void updatePhysics();
+    void drawTextures();
 
 private:
     ray_engine::Physics physics_;
