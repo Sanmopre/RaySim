@@ -11,7 +11,6 @@
 struct TextureData
 {
     b2Vec2 relativePosition = b2Vec2{0,0};
-    b2Vec2 size = b2Vec2{0,0};
     Texture2D texture = Texture2D();
 };
 
@@ -44,8 +43,9 @@ inline void TextureComponent::addTexture(const std::string &path, b2Vec2 relativ
 {
     TextureData textureData;
     textureData.relativePosition = relativePosition;
-    textureData.size = size;
     textureData.texture = LoadTexture(path.c_str());
+    textureData.texture.height = size.y;
+    textureData.texture.width = size.x;
     dataVector_.push_back(textureData);
 }
 

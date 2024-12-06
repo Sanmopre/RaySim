@@ -26,23 +26,28 @@ ApplicationState RaySim::Init()
     const auto id = createEntity();
 
     b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.position = {0, 10};
+    bodyDef.position = {0, 100};
+    bodyDef.rotation = b2MakeRot(50 * DEG2RAD);
     bodyDef.type = b2_dynamicBody;
 
-    b2Polygon polygon = b2MakeBox(0.5f, 0.5f);
+    b2Polygon polygon = b2MakeBox(30.0f, 30.0f);
     b2ShapeDef shapeDef = b2DefaultShapeDef();
 
     std::ignore = registry_.emplace<b2BodyId>(id, physics_.createPhysicsObject(bodyDef, polygon, shapeDef));
     auto& textureComp = registry_.emplace<TextureComponent>(id);
-    textureComp.addTexture("../resources/wood.png",{0.0f,0.0f},{1.0f,1.0f});
+    textureComp.addTexture("../resources/wood.png",{0.0f,0.0f},{30.0f,30.0f});
 
+
+    const auto idTerrain = createEntity();
     b2BodyDef bodyDef2 = b2DefaultBodyDef();
     bodyDef2.position = {0, 0};
     bodyDef2.type = b2_staticBody;
 
-    b2Polygon polygon2 = b2MakeBox(20.0f, 0.5f);
+    b2Polygon polygon2 = b2MakeBox(200.0f, 10.0f);
     b2ShapeDef shapeDef2 = b2DefaultShapeDef();
-    terrainId = physics_.createPhysicsObject(bodyDef2, polygon2, shapeDef2);
+    std::ignore = registry_.emplace<b2BodyId>(idTerrain, physics_.createPhysicsObject(bodyDef2, polygon2, shapeDef2));
+    auto& textureComp2 = registry_.emplace<TextureComponent>(idTerrain);
+    textureComp2.addTexture("../resources/wood.png",{0.0f,0.0f},{200.0f, 10.0f});
 
     Camera2D camera = { 0 };
     camera_.target = (Vector2){ 0, 0};
@@ -100,7 +105,7 @@ void RaySim::drawTextures()
     BeginDrawing();
     BeginMode2D(camera_);
 
-    ClearBackground(DARKBLUE);
+    ClearBackground(RAYWHITE);
 
     // Update the transform of all entities with a bodyId
     const auto textureEntitiesView = registry_.view<ray_engine::Transform, TextureComponent>();
@@ -112,9 +117,11 @@ void RaySim::drawTextures()
 
         for (const auto& textureData : textureComp.getTexturesData())
         {
-            const int x = static_cast<int>(transform.position.x + textureData.relativePosition.x);
-            const int y = static_cast<int>(transform.position.y + textureData.relativePosition.y);
-            DrawTexture(textureData.texture, x, y, WHITE);
+            const auto x = transform.position.x + textureData.relativePosition.x - textureData.texture.width/2.0f;
+
+            // Y is negative since the raylib uses a  screen-space coordinate system instead of Cartesian coordinate system
+            const auto y = -(transform.position.y + textureData.relativePosition.y - textureData.texture.height/2.0f);
+            DrawTextureEx(textureData.texture, {x, y} , - b2Rot_GetAngle(transform.rotation) * RAD2DEG, 1.0f, WHITE);
         }
     }
 

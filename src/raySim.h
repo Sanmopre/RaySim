@@ -43,11 +43,6 @@ private:
     const int screenWidth_;
     const int screenHeight_;
     entt::registry registry_;
-
-    //testing
-    b2BodyId bodyId;
-    b2BodyId terrainId;
-    TextureComponent textureComponent_;
 };
 
 }
