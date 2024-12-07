@@ -1,5 +1,6 @@
 #include "raySim.h"
 #include "types.h"
+#include "luaScriptManager.h"
 
 #include <iostream>
 
@@ -13,6 +14,7 @@ RaySim::RaySim()
 , screenWidth_{800}
 , screenHeight_{800}
 {
+    LuaScriptManager lua;
 }
 
 RaySim::~RaySim()
