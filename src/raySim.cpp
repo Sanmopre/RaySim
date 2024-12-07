@@ -21,16 +21,16 @@ RaySim::~RaySim()
 
 ApplicationState RaySim::Init()
 {
-    InitWindow(screenWidth_, screenHeight_, "RaySim");
+    InitWindow(screenWidth_, screenHeight_, "RayEngine");
 
     const auto id = createEntity();
 
     b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.position = {0, 100};
-    bodyDef.rotation = b2MakeRot(50 * DEG2RAD);
+    bodyDef.position = {-60, 100};
+    bodyDef.rotation = b2MakeRot(48 * DEG2RAD);
     bodyDef.type = b2_dynamicBody;
-
-    b2Polygon polygon = b2MakeBox(30.0f, 30.0f);
+    
+    b2Polygon polygon = b2MakeBox(PHYSICS_TO_PIXELS(30.0f), PHYSICS_TO_PIXELS(30.0f));
     b2ShapeDef shapeDef = b2DefaultShapeDef();
 
     std::ignore = registry_.emplace<b2BodyId>(id, physics_.createPhysicsObject(bodyDef, polygon, shapeDef));
@@ -41,9 +41,10 @@ ApplicationState RaySim::Init()
     const auto idTerrain = createEntity();
     b2BodyDef bodyDef2 = b2DefaultBodyDef();
     bodyDef2.position = {0, 0};
+    bodyDef2.rotation = b2MakeRot(-15 * DEG2RAD);
     bodyDef2.type = b2_staticBody;
 
-    b2Polygon polygon2 = b2MakeBox(200.0f, 10.0f);
+    b2Polygon polygon2 = b2MakeBox(PHYSICS_TO_PIXELS(200.0f), PHYSICS_TO_PIXELS(10.0f));
     b2ShapeDef shapeDef2 = b2DefaultShapeDef();
     std::ignore = registry_.emplace<b2BodyId>(idTerrain, physics_.createPhysicsObject(bodyDef2, polygon2, shapeDef2));
     auto& textureComp2 = registry_.emplace<TextureComponent>(idTerrain);
@@ -53,7 +54,7 @@ ApplicationState RaySim::Init()
     camera_.target = (Vector2){ 0, 0};
     camera_.offset = (Vector2){ static_cast<f32>(screenWidth_)/2.0f, static_cast<f32>(screenHeight_)/2.0f };
     camera_.rotation = 0.0f;
-    camera_.zoom = 1.0f;
+    camera_.zoom = 02.0f;
     DisableCursor();
 
     SetTargetFPS(targetFps);
@@ -117,11 +118,18 @@ void RaySim::drawTextures()
 
         for (const auto& textureData : textureComp.getTexturesData())
         {
-            const auto x = transform.position.x + textureData.relativePosition.x - textureData.texture.width/2.0f;
+            const auto x = transform.position.x + textureData.relativePosition.x;
 
             // Y is negative since the raylib uses a  screen-space coordinate system instead of Cartesian coordinate system
-            const auto y = -(transform.position.y + textureData.relativePosition.y - textureData.texture.height/2.0f);
-            DrawTextureEx(textureData.texture, {x, y} , - b2Rot_GetAngle(transform.rotation) * RAD2DEG, 1.0f, WHITE);
+            const auto y = -(transform.position.y + textureData.relativePosition.y);
+
+            const Vector2 origin = {static_cast<f32>(textureData.texture.width) / 2.0f, static_cast<f32>(textureData.texture.height) / 2.0f};
+            const auto source = Rectangle{0, 0, static_cast<f32>(textureData.texture.width), static_cast<f32>(textureData.texture.height)};
+            const auto destination = Rectangle{x, y, static_cast<f32>(textureData.texture.width), static_cast<f32>(textureData.texture.height)};
+            const f32 rotation = -b2Rot_GetAngle(transform.rotation) * RAD2DEG;
+
+            //DrawTextureEx(textureData.texture, {x, y} , - b2Rot_GetAngle(transform.rotation) * RAD2DEG, 1.0f, WHITE);
+            DrawTexturePro( textureData.texture, source, destination, origin,rotation, WHITE);
         }
     }
 

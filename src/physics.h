@@ -8,6 +8,8 @@
 //std
 #include <vector>
 
+#define PHYSICS_TO_PIXELS(x) (f32)(x/2.0f)
+
 namespace ray_engine
 {
 
