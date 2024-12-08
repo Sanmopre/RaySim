@@ -5,6 +5,7 @@
 #include <iostream>
 
 // lua
+#include "lua.hpp"
 #include "lauxlib.h"
 #include "lualib.h"
 
@@ -41,4 +42,9 @@ LuaScriptManager::LuaScriptManager()
 
 LuaScriptManager::~LuaScriptManager()
 {
+}
+
+bool LuaScriptManager::LoadLuaScript(const std::filesystem::path &path)
+{
+    return true;
 }

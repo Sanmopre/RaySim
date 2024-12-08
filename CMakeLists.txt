@@ -6,23 +6,12 @@ project(rayEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Add Raylib and Box2D
+# Add Raylib, Box2D and Lua
 add_subdirectory(thirdParty/raylib-5.0)
 add_subdirectory(thirdParty/box2d-3.0.0)
+add_subdirectory(thirdParty/lua-5.4.7)
 
-# Collect Lua source files
-file(GLOB LUA_SOURCES thirdParty/lua-5.4.7/*.c)
-
-# Exclude the main Lua interpreter file
-list(REMOVE_ITEM LUA_SOURCES ${CMAKE_SOURCE_DIR}/thirdParty/lua-5.4.7/lua.c)
-
-# Add Lua library target
-add_library(lua STATIC ${LUA_SOURCES})
-
-# Include Lua headers
-target_include_directories(lua PUBLIC thirdParty/lua-5.4.7)
-
-# Create rayEngine executable
+# Create rayEngine executable and include Lua sources
 add_executable(rayEngine
         src/main.cpp
         src/physics.cpp
@@ -36,8 +25,11 @@ add_executable(rayEngine
         src/luaScriptManager.h
 )
 
-# Link libraries to rayEngine
-target_link_libraries(rayEngine lua raylib box2d)
+# Include Lua headers
+target_include_directories(rayEngine PRIVATE thirdParty/lua-5.4.7)
 
-# Include directories
-target_include_directories(rayEngine PRIVATE thirdParty/raylib-5.0/src thirdParty/entt thirdParty/fastNoiseLite thirdParty/box2d-3.0.0/include thirdParty/lua-5.4.7)
+# Link libraries to rayEngine
+target_link_libraries(rayEngine raylib box2d LuaLib)
+
+# Include directories for other libraries
+target_include_directories(rayEngine PRIVATE thirdParty/raylib-5.0/src thirdParty/entt thirdParty/fastNoiseLite thirdParty/box2d-3.0.0/include thirdParty/lua-5.4.7/src)
