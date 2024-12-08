@@ -4,47 +4,57 @@
 #include <algorithm>
 #include <iostream>
 
-// lua
-#include "lua.hpp"
-#include "lauxlib.h"
-#include "lualib.h"
-
 LuaScriptManager::LuaScriptManager()
 {
-    // Initialize a Lua state
-    lua_State* L = luaL_newstate();
+    L = luaL_newstate();
 
     if (L == nullptr) {
         std::cout << "Failed to initialize Lua." << std::endl;
         return;
     }
 
-    // Open Lua standard libraries
     luaL_openlibs(L);
-
-    // Lua code as a string
-    const char* luaCode = R"(
-        print("Hello from Lua using a string!")
-        local x = 10
-        local y = 20
-        print("Sum:", x + y)
-    )";
-
-    // Execute the Lua code string
-    if (luaL_dostring(L, luaCode) != LUA_OK) {
-        std::cerr << "Error: " << lua_tostring(L, -1) << std::endl;
-        lua_pop(L, 1); // Remove error message from stack
-    }
-
-    // Close the Lua state
-    lua_close(L);
 }
 
 LuaScriptManager::~LuaScriptManager()
 {
+    lua_close(L);
 }
 
-bool LuaScriptManager::LoadLuaScript(const std::filesystem::path &path)
+bool LuaScriptManager::loadLuaScript(const std::filesystem::path &path)
 {
+    if (!std::filesystem::exists(path))
+    {
+        std::cout << "Script " << path << " does not exists.\n";
+        return false;
+    }
+
+    if (luaL_dofile(L, path.string().c_str()) != LUA_OK)
+    {
+        std::cerr << "Error: " << lua_tostring(L, -1) << std::endl;
+        lua_pop(L, 1);
+        return false;
+    }
+
+    lua_getglobal(L, "update");
+    lua_pushnumber(L, 98);
+    lua_pcall(L, 1, 1, 0);
+
+    std::cout <<  "RETURN LUA: "  << lua_toboolean(L, -1) << std::endl;
+
+    luaScripts_.emplace_back(path);
     return true;
+}
+
+bool LuaScriptManager::callUpdateFunction(f32 dt)
+{
+    for (const auto &script: luaScripts_)
+    {
+        if (luaL_dofile(L, script.string().c_str()) != LUA_OK)
+        {
+            std::cerr << "Error: " << lua_tostring(L, -1) << std::endl;
+            lua_pop(L, 1);
+            return false;
+        }
+    }
 }

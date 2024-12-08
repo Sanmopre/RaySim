@@ -15,6 +15,7 @@ RaySim::RaySim()
 , screenHeight_{800}
 {
     LuaScriptManager lua;
+    std::ignore = lua.loadLuaScript("../src/luaScripts/test.lua");
 }
 
 RaySim::~RaySim()
