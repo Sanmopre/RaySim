@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(thirdParty/raylib-5.0)
 add_subdirectory(thirdParty/box2d-3.0.0)
 add_subdirectory(thirdParty/lua-5.4.7)
+add_subdirectory(thirdParty/asio-1.30.2)
 
 # Create rayEngine executable and include Lua sources
 add_executable(rayEngine
@@ -29,7 +30,7 @@ add_executable(rayEngine
 target_include_directories(rayEngine PRIVATE thirdParty/lua-5.4.7)
 
 # Link libraries to rayEngine
-target_link_libraries(rayEngine raylib box2d LuaLib)
+target_link_libraries(rayEngine raylib box2d LuaLib boost_asio)
 
 # Include directories for other libraries
 target_include_directories(rayEngine PRIVATE thirdParty/raylib-5.0/src thirdParty/entt thirdParty/fastNoiseLite thirdParty/box2d-3.0.0/include thirdParty/lua-5.4.7/src)
