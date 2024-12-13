@@ -10,7 +10,6 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(thirdParty/raylib-5.0)
 add_subdirectory(thirdParty/box2d-3.0.0)
 add_subdirectory(thirdParty/lua-5.4.7)
-add_subdirectory(thirdParty/asio-1.30.2)
 
 # Create rayEngine executable and include Lua sources
 add_executable(rayEngine
